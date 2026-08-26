@@ -12,11 +12,21 @@ jobs:
       - name: Checkout source
         uses: actions/checkout@v4
 
-      - name: Build APK with Buildozer
-        uses: ArtemSBulgakov/buildozer-action@v1
-        with:
-          workdir: android_app
-          buildozer_version: stable
+      - name: Build APK with Buildozer (official kivy/buildozer image)
+        # Trước đây workflow dùng ArtemSBulgakov/buildozer-action, action này tự build
+        # một Docker image trong lúc chạy và thường báo "Docker build failed with exit
+        # code 1". Ở đây ta dùng image chính chủ kivy/buildozer:stable (đã cài sẵn hệ
+        # thống, SDK/NDK và buildozer) nên KHÔNG còn bước build image -> tránh lỗi trên.
+        run: |
+          cd android_app
+          docker run --rm \
+            -u root \
+            -e HOME=/home/user \
+            -v "$PWD":/app \
+            -w /app \
+            --entrypoint buildozer \
+            kivy/buildozer:stable \
+            android debug
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
